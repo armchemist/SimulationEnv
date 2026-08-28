@@ -1,48 +1,51 @@
 """Rebuild the lab-bench prop layout in Blender.
 
 Idempotent: re-running deletes and recreates the waste bucket, then snaps
-every prop back to the coordinates below. Nothing else in the scene is
+every prop to the coordinates in layouts.py. Nothing else in the scene is
 touched.
 
-    blender lab_bench.blend --background --python blender/scripts/build_layout.py --save
+    blender lab_bench.blend --background --python blender/scripts/build_layout.py
+    SIMENV_VARIANT=3zone blender lab_bench.blend --background \
+        --python blender/scripts/build_layout.py
 
 or, with the scene open, from the Scripting workspace:
 
     exec(open(r"<repo>/blender/scripts/build_layout.py").read())
 
-Bench surface is Z = 0, the display floor spans X -700..700 and
-Y -194.6..405.4 mm. Props are laid out left to right in four zones:
+Props a variant does not use are hidden rather than deleted, so switching
+back and forth costs nothing.
 
-    ① waste bucket  ② beaker x2  ③ cylinder holder x2  ④ reagent x5
-
-Zone gaps are 48 | 96 | 96 | 96 | 48 mm and total exactly 1400 mm.
+Bench surface is Z = 0; the display floor spans X -700..700 and
+Y -194.6..405.4 mm. See layouts.py for the coordinates and docs/layout.md
+for the dimension tables.
 """
 
 import bpy
+import os
+import importlib.util
 from mathutils import Vector
 
+REPO = os.environ.get("SIMENV_REPO", r"C:\Users\Gamzadole\SimulationEnv")
+VARIANT = os.environ.get("SIMENV_VARIANT", "")
+
 PROP_COLLECTION = "lab_scene"
-
-# name -> (x, y, z) in metres
-LAYOUT = {
-    # ① 폐기통
-    "Waste_Bucket":            (-0.5735, 0.320, 0.0),
-    # ② 비커 x2, 피치 90 mm
-    "beaker_01":               (-0.3640, 0.330, 0.0),
-    "beaker_02":               (-0.2740, 0.330, 0.0),
-    # ③ 실린더 홀더 x2, 피치 180 mm (틈 15 mm)
-    "rack_01":                 (-0.0605, 0.330, 0.0),
-    "rack_02":                 ( 0.1195, 0.330, 0.0),
-    # ④ 시약 x5, 열 피치 70 mm, 지그재그 앞 3 / 뒤 2
-    "Chemical_Bottle_H2O2":    ( 0.3355, 0.295, 0.0),
-    "Chemical_Bottle_ETHANOL": ( 0.4055, 0.365, 0.0),
-    "Chemical_Bottle_SOLVENT": ( 0.4755, 0.295, 0.0),
-    "Chemical_Bottle_ACID":    ( 0.5455, 0.365, 0.0),
-    "Chemical_Bottle_NAOH":    ( 0.6155, 0.295, 0.0),
-}
-
 BUCKET_PARTS = ("Waste_Bucket", "Waste_Bucket_Body",
                 "Waste_Bucket_Opening", "Waste_Bucket_Rim")
+
+
+def load_layouts():
+    """Import layouts.py by path — Blender runs scripts outside a package."""
+    here = (os.path.dirname(os.path.abspath(__file__))
+            if "__file__" in globals()
+            else os.path.join(REPO, "blender", "scripts"))
+    spec = importlib.util.spec_from_file_location(
+        "simenv_layouts", os.path.join(here, "layouts.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+L = load_layouts()
 
 
 def build_waste_bucket():
@@ -91,35 +94,56 @@ def build_waste_bucket():
     return root
 
 
-def apply_layout():
-    for name, loc in LAYOUT.items():
-        bpy.data.objects[name].location = loc
+def apply_layout(variant=None):
+    """Place every prop this variant uses; hide the ones it does not."""
+    variant = variant or VARIANT or L.DEFAULT_VARIANT
+    layout = L.LAYOUTS[variant]
+
+    for name, loc in layout.items():
+        o = bpy.data.objects[name]
+        o.location = loc
+        for ob in [o] + list(o.children_recursive):
+            ob.hide_viewport = False
+            ob.hide_render = False
+
+    for name in L.hidden_in(variant):
+        o = bpy.data.objects.get(name)
+        if not o:
+            continue
+        for ob in [o] + list(o.children_recursive):
+            ob.hide_viewport = True
+            ob.hide_render = True
+
     bpy.context.view_layer.update()
+    return variant
 
 
-def report():
-    def bbox(o):
-        obs = [o] + list(o.children_recursive) if o.type == "EMPTY" else [o]
-        pts = [ob.matrix_world @ Vector(c)
-               for ob in obs if ob.type == "MESH" for c in ob.bound_box]
-        return (min(p.x for p in pts) * 1000, max(p.x for p in pts) * 1000)
+def report(variant):
+    def span(names):
+        pts = []
+        for n in names:
+            o = bpy.data.objects[n]
+            obs = [o] + list(o.children_recursive) if o.type == "EMPTY" else [o]
+            pts += [ob.matrix_world @ Vector(c)
+                    for ob in obs if ob.type == "MESH" for c in ob.bound_box]
+        return min(p.x for p in pts) * 1000, max(p.x for p in pts) * 1000
 
-    zones = [("① waste",   ["Waste_Bucket"]),
-             ("② beaker",  ["beaker_01", "beaker_02"]),
-             ("③ holder",  ["rack_01", "rack_02"]),
-             ("④ reagent", [n for n in LAYOUT if n.startswith("Chemical")])]
+    layout = L.LAYOUTS[variant]
+    zones = [("폐기통",       ["Waste_Bucket"]),
+             ("비커 x2",      ["beaker_01", "beaker_02"]),
+             ("실린더 홀더 x2", ["rack_01", "rack_02"]),
+             ("시약 x5",      [n for n in layout if n.startswith("Chemical")])]
+    zones = [(lab, ns) for lab, ns in zones if all(n in layout for n in ns)]
+
+    print("variant:", variant)
     prev = -700.0
-    for label, names in zones:
-        spans = [bbox(bpy.data.objects[n]) for n in names]
-        lo = min(s[0] for s in spans)
-        hi = max(s[1] for s in spans)
-        print("%-11s X %8.1f ~ %8.1f   span %6.1f   gap %5.1f"
-              % (label, lo, hi, hi - lo, lo - prev))
+    for i, (label, names) in enumerate(zones, 1):
+        lo, hi = span(names)
+        print("  %d %-14s X %8.1f ~ %8.1f   span %6.1f   gap %6.1f"
+              % (i, label, lo, hi, hi - lo, lo - prev))
         prev = hi
-    print("%-11s                              gap %5.1f" % ("right edge", 700.0 - prev))
+    print("    %-14s %35s gap %6.1f" % ("right edge", "", 700.0 - prev))
 
 
-if __name__ == "__main__" or True:
-    build_waste_bucket()
-    apply_layout()
-    report()
+build_waste_bucket()
+report(apply_layout())

@@ -5,17 +5,28 @@ a prismatic carriage, two OpenMANIPULATOR-X mounts, and the bench props
 (waste bucket, beakers, cylinder holders, five reagent bottles).
 
 The Blender scene is the single source of truth for geometry and layout;
-the Gazebo models are generated from it.
+the drawings and the Gazebo worlds are both generated from it.
 
-![top view](drawings/bench_topview_dimensioned.png)
+## Layouts
 
-## Layout
+Two arrangements are kept on the same 1400 × 600 mm bench, and **both are
+simulated**. Coordinates live in one file,
+[`blender/scripts/layouts.py`](blender/scripts/layouts.py).
 
-Four zones, left to right, on a 1400 × 600 mm bench:
+### 4-zone — default
 
-**① 폐기통 → ② 비커 ×2 → ③ 실린더 홀더 ×2 → ④ 시약 ×5**
+**① 폐기통 → ② 비커 ×2 → ③ 실린더 홀더 ×2 → ④ 시약 ×5**, gaps 48 | 96 | 96 | 96 | 48
 
-Reagents are staggered: 3 in the front row, 2 in the rear.
+![4 zone](drawings/bench_topview_4zone.png)
+
+### 3-zone
+
+**① 비커 ×2 → ② 실린더 홀더 ×2 → ③ 시약 ×5**, gaps 187.5 | 180 | 120 | 53.5,
+holders centred on X = 0, no waste bucket
+
+![3 zone](drawings/bench_topview_3zone.png)
+
+Reagents are staggered in both: 3 in the front row, 2 in the rear.
 Full coordinate tables are in [`docs/layout.md`](docs/layout.md).
 
 World frame: **+X right, +Y back, +Z up**, metres, and **Z = 0 is the bench
@@ -27,17 +38,19 @@ anywhere in the pipeline.
 ```
 blender/
   lab_bench.blend              source scene
-  scripts/build_layout.py      rebuild props + snap the layout (idempotent)
+  scripts/layouts.py           the layout variants — every coordinate
+  scripts/build_layout.py      rebuild props + apply a variant (idempotent)
   scripts/render_topview.py    orthographic top render, 2 px/mm
-  scripts/export_gazebo.py     scene -> gazebo/ models, meshes and world
+  scripts/export_gazebo.py     scene -> gazebo/ models, meshes and worlds
 drawings/
-  draw_topview.py              dimensioned drawing from the top render
-  topview.png                  top render (transparent background)
-  bench_topview_dimensioned.png
+  draw_topview.py              dimensioned drawings from the top renders
+  topview_<variant>.png        top renders (transparent background)
+  bench_topview_<variant>.png  the dimensioned drawings
 gazebo/
   models/<name>/model.sdf      one model per prop / assembly
   models/<name>/meshes/*.obj   visual meshes (+ .mtl)
-  worlds/lab_bench.world       the assembled bench
+  worlds/lab_bench.world       4-zone bench
+  worlds/lab_bench_3zone.world 3-zone bench
 ros2/
   simulation_env_bringup/      launch + ros_gz_bridge config
 docs/layout.md
@@ -51,7 +64,8 @@ Tested against **Gazebo Sim (Harmonic)** with **ROS 2** and `ros_gz`.
 
 ```bash
 export GZ_SIM_RESOURCE_PATH=$PWD/gazebo/models:$GZ_SIM_RESOURCE_PATH
-gz sim -r gazebo/worlds/lab_bench.world
+gz sim -r gazebo/worlds/lab_bench.world          # 4 zone
+gz sim -r gazebo/worlds/lab_bench_3zone.world    # 3 zone
 ```
 
 ### With ROS 2
@@ -62,8 +76,12 @@ git clone https://github.com/armchemist/SimulationEnv.git
 cd ~/ws
 colcon build --packages-select simulation_env_bringup
 source install/setup.bash
-ros2 launch simulation_env_bringup lab_bench.launch.py
+
+ros2 launch simulation_env_bringup lab_bench.launch.py                 # 4 zone
+ros2 launch simulation_env_bringup lab_bench.launch.py layout:=3zone   # 3 zone
 ```
+
+Also accepts `gui:=false` (server only) and `paused:=true`.
 
 Drive the carriage (metres, ±0.42 from the rail centre):
 
@@ -73,18 +91,27 @@ ros2 topic pub --once /rail_axis/carriage_slide/cmd_pos \
 ros2 topic echo /rail_axis/joint_states
 ```
 
+The rail plugins publish on world-independent topics, so one bridge config
+serves both worlds.
+
 ## Regenerating from Blender
 
 ```bash
-# rebuild the props and snap the layout
-blender blender/lab_bench.blend --background --python blender/scripts/build_layout.py
+export SIMENV_REPO=$PWD
 
-# re-export every Gazebo model, mesh and the world file
-SIMENV_REPO=$PWD blender blender/lab_bench.blend --background \
+# meshes, model.sdf and BOTH world files — the scene's current variant
+# does not matter, mesh origins sit on each model's own base
+blender blender/lab_bench.blend --background \
     --python blender/scripts/export_gazebo.py
 
-# redraw the dimensioned top view
-blender blender/lab_bench.blend --background --python blender/scripts/render_topview.py
+# one top render per variant
+for v in 4zone 3zone; do
+  SIMENV_VARIANT=$v blender blender/lab_bench.blend --background \
+      --python blender/scripts/build_layout.py \
+      --python blender/scripts/render_topview.py
+done
+
+# both dimensioned drawings
 python drawings/draw_topview.py
 ```
 
@@ -95,9 +122,11 @@ inertias are analytic for those primitives; they are plausible, not weighed.
 
 ## Models
 
+Shared by both worlds; only the poses differ.
+
 | Model | Collision | Mass (kg) | Notes |
 |---|---|---:|---|
-| `waste_bucket` | cylinder ⌀157 × 204 | 0.45 | |
+| `waste_bucket` | cylinder ⌀157 × 204 | 0.45 | 4-zone only |
 | `beaker` | cylinder ⌀70 × 95 | 0.15 | spawned twice |
 | `cylinder_holder` | box 165 × 50 × 80 | 0.25 | spawned twice, 6 slots |
 | `reagent_bottle_h2o2` | box 75 × 58 × 172 | 0.55 | amber |
@@ -111,7 +140,7 @@ inertias are analytic for those primitives; they are plausible, not weighed.
 | `omx_mounting_plate` | box 395 × 140 × 6 | 1.2 | static |
 | `omx_module` | box 150 × 375 × 277 | 1.5 | static visual placeholder |
 
-`linear_rail` and `rail_carriage` are not placed in the world directly —
+`linear_rail` and `rail_carriage` are not placed in either world directly —
 `rail_axis` references their meshes and adds the joint — but their model
 directories must stay on `GZ_SIM_RESOURCE_PATH`.
 
@@ -120,8 +149,7 @@ directories must stay on `GZ_SIM_RESOURCE_PATH`.
 `omx_module` is a **single fused, decimated mesh (26k triangles)**. It is a
 visual placeholder: it does not articulate and has no joints. For real
 manipulation, drop the official OpenMANIPULATOR-X description in and delete
-the two `omx_module` includes from `gazebo/worlds/lab_bench.world`. Mount
-poses to reuse:
+the two `omx_module` includes from the world files. Mount poses to reuse:
 
 | | X | Y | Z |
 |---|---:|---:|---:|

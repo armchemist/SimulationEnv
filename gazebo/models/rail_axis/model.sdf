@@ -82,9 +82,12 @@
       <cmd_min>-60</cmd_min>
     </plugin>
 
+    <!-- explicit topic so it does not carry the world name, and one
+         ros_gz_bridge config serves every layout variant -->
     <plugin filename="gz-sim-joint-state-publisher-system"
             name="gz::sim::systems::JointStatePublisher">
       <joint_name>carriage_slide</joint_name>
+      <topic>/rail_axis/joint_state</topic>
     </plugin>
   </model>
 </sdf>

@@ -4,9 +4,17 @@ All coordinates are millimetres in the Blender/Gazebo world frame:
 **+X right, +Y back, +Z up**, and **Z = 0 is the bench surface**.
 The display floor spans X −700 … +700 and Y −194.6 … +405.4 (1400 × 600).
 
-![top view](../drawings/bench_topview_dimensioned.png)
+Two arrangements are kept, and both are simulated. Coordinates live in
+[`blender/scripts/layouts.py`](../blender/scripts/layouts.py) — change them
+there and every drawing and world file follows.
 
-## Zones, left to right
+---
+
+## 4-zone (default)
+
+`gazebo/worlds/lab_bench.world` · `ros2 launch … layout:=4zone`
+
+![4 zone](../drawings/bench_topview_4zone.png)
 
 | # | Zone | X span | Width | Gap before |
 |---|------|--------|-------|------------|
@@ -16,28 +24,64 @@ The display floor spans X −700 … +700 and Y −194.6 … +405.4 (1400 × 600
 | ④ | 시약 Reagent ×5 | 298.0 … 652.0 | 354.0 | 96.0 |
 |   | right edge | | | 48.0 |
 
-Chain totals exactly 1400 mm.
+| Object | X | Y |
+|---|---:|---:|
+| `Waste_Bucket` | −573.5 | 320 |
+| `beaker_01` / `beaker_02` | −364.0 / −274.0 | 330 |
+| `rack_01` / `rack_02` | −60.5 / 119.5 | 330 |
+| `Chemical_Bottle_H2O2` | 335.5 | 295 |
+| `Chemical_Bottle_ETHANOL` | 405.5 | 365 |
+| `Chemical_Bottle_SOLVENT` | 475.5 | 295 |
+| `Chemical_Bottle_ACID` | 545.5 | 365 |
+| `Chemical_Bottle_NAOH` | 615.5 | 295 |
 
-## Object placement
+---
 
-| Object | X | Y | Footprint | Height |
-|---|---:|---:|---|---:|
-| `Waste_Bucket` | −573.5 | 320 | ⌀157 (opening ⌀136) | 203.8 |
-| `beaker_01` | −364.0 | 330 | ⌀70 | 95 |
-| `beaker_02` | −274.0 | 330 | ⌀70 | 95 |
-| `rack_01` | −60.5 | 330 | 165 × 50 | 80 |
-| `rack_02` | 119.5 | 330 | 165 × 50 | 80 |
-| `Chemical_Bottle_H2O2` | 335.5 | 295 | 75 × 58 | 172 |
-| `Chemical_Bottle_ETHANOL` | 405.5 | 365 | 75 × 58 | 172 |
-| `Chemical_Bottle_SOLVENT` | 475.5 | 295 | 70 × 54 | 179 |
-| `Chemical_Bottle_ACID` | 545.5 | 365 | 73 × 56 | 187 |
-| `Chemical_Bottle_NAOH` | 615.5 | 295 | 73 × 56 | 187 |
+## 3-zone
+
+`gazebo/worlds/lab_bench_3zone.world` · `ros2 launch … layout:=3zone`
+
+No waste bucket, and the cylinder holders are centred on X = 0.
+
+![3 zone](../drawings/bench_topview_3zone.png)
+
+| # | Zone | X span | Width | Gap before |
+|---|------|--------|-------|------------|
+| ① | 비커 Beaker ×2 | −512.5 … −352.5 | 160.0 | 187.5 (left edge) |
+| ② | 실린더 홀더 Cylinder holder ×2 | −172.5 … 172.5 | 345.0 | 180.0 |
+| ③ | 시약 Reagent ×5 | 292.5 … 646.5 | 354.0 | 120.0 |
+|   | right edge | | | 53.5 |
+
+| Object | X | Y |
+|---|---:|---:|
+| `beaker_01` / `beaker_02` | −477.5 / −387.5 | 330 |
+| `rack_01` / `rack_02` | −90.0 / 90.0 | 330 |
+| `Chemical_Bottle_H2O2` | 330.0 | 295 |
+| `Chemical_Bottle_ETHANOL` | 400.0 | 365 |
+| `Chemical_Bottle_SOLVENT` | 470.0 | 295 |
+| `Chemical_Bottle_ACID` | 540.0 | 365 |
+| `Chemical_Bottle_NAOH` | 610.0 | 295 |
+
+Both chains total exactly 1400 mm.
+
+---
+
+## Prop sizes (identical in both variants)
+
+| Object | Footprint | Height |
+|---|---|---:|
+| Waste bucket | ⌀157 (opening ⌀136) | 203.8 |
+| Beaker | ⌀70 | 95 |
+| Cylinder holder | 165 × 50, 6 slots | 80 |
+| Reagent H2O2 / ETHANOL | 75 × 58 | 172 |
+| Reagent SOLVENT | 70 × 54 | 179 |
+| Reagent ACID / NaOH | 73 × 56 | 187 |
 
 Pitches: beakers 90, holders 180 (15 gap), reagent columns 70.
 Reagents are staggered — 3 in the front row (Y = 295), 2 in the rear row
 (Y = 365), 70 apart.
 
-## Fixed hardware
+## Fixed hardware (identical in both variants)
 
 | Part | Extent |
 |---|---|
