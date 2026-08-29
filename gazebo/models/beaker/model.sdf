@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <sdf version="1.10">
   <model name="beaker">
-    <static>false</static>
+    <static>true</static>
     <link name="base_link">
       <inertial>
         <pose>0.000000 0.000000 0.047500 0 0 0</pose>

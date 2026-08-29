@@ -143,8 +143,8 @@ Shared by both worlds; only the poses differ.
 | Model | Collision | Mass (kg) | Notes |
 |---|---|---:|---|
 | `waste_bucket` | cylinder ⌀157 × 204 | 0.45 | 4-zone only |
-| `beaker` | cylinder ⌀70 × 95 | 0.15 | spawned twice |
-| `cylinder_holder` | box 165 × 50 × 80 | 0.25 | spawned twice, 6 slots |
+| `beaker` | cylinder ⌀70 × 95 | 0.15 | static, spawned twice |
+| `cylinder_holder` | box 165 × 50 × 80 | 0.25 | static, spawned twice, 6 slots |
 | `reagent_bottle_h2o2` | box 75 × 58 × 172 | 0.55 | amber |
 | `reagent_bottle_ethanol` | box 75 × 58 × 172 | 0.55 | amber |
 | `reagent_bottle_solvent` | box 70 × 54 × 179 | 0.52 | dark |
@@ -156,9 +156,15 @@ Shared by both worlds; only the poses differ.
 | `omx_mounting_plate` | box 395 × 140 × 6 | 1.2 | static |
 | `omx_module` | box 150 × 375 × 277 | 1.5 | static visual placeholder |
 
-Both worlds also carry `bench_walls`, a static 150 mm white kerb 20 mm thick
-around the bench edge, so props that get knocked cannot fall off the surface.
-It is written straight into the world files by `export_gazebo.py`.
+Both worlds also carry `bench_walls`: static white panels 20 mm thick and
+**1.2 m tall** around the bench edge. They keep knocked props on the surface
+and, more importantly, fill the frame of any camera mounted on the bench, so
+the world outside never appears in an image. `<scene><background>` is set to
+the same white, so a sliver above a wall top still reads as wall. Both are
+written into the world files by `export_gazebo.py`.
+
+A camera at the OMX mount height (Z = 0.4) with a 90 deg horizontal FOV sees
+only wall looking along +Y, along -X, and pitched 30 deg up.
 
 `linear_rail` and `rail_carriage` are not placed in either world directly —
 `rail_axis` references their meshes and adds the joint — but their model

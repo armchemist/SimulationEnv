@@ -117,12 +117,12 @@ MODELS = [
          desc="Waste bucket, tapered body with red rim"),
 
     dict(name="beaker", objects=["beaker_01"],
-         origin="object", mass=0.15,
+         origin="object", mass=0.15, static=True,
          shape=("cylinder", 0.035, 0.095), centre=(0, 0, 0.0475),
          desc="Glass beaker 70 x 95 mm"),
 
     dict(name="cylinder_holder", objects=["rack_01"],
-         origin="object", mass=0.25,
+         origin="object", mass=0.25, static=True,
          shape=("box", 0.165, 0.050, 0.080), centre=(0, 0, 0.040),
          desc="Acrylic cylinder / test-tube holder, 6 slots"),
 
@@ -533,6 +533,15 @@ def write_world(variant):
 
     <gravity>0 0 -9.81</gravity>
 
+    <scene>
+      <!-- same white as bench_walls, so any sliver above the wall top does
+           not read as "outside" to a camera -->
+      <background>0.97 0.97 0.97 1</background>
+      <ambient>0.55 0.55 0.55 1</ambient>
+      <grid>false</grid>
+      <shadows>true</shadows>
+    </scene>
+
     <light type="directional" name="sun">
       <cast_shadows>true</cast_shadows>
       <pose>0 0 6 0 0 0</pose>
@@ -564,17 +573,18 @@ def write_world(variant):
       </link>
     </model>
 
-    <!-- white boundary walls around the bench edge -->
+    <!-- white boundary walls: tall enough that a camera on the bench
+         frames wall, not the world outside -->
     <model name="bench_walls">
       <static>true</static>
       <link name="link">
         <collision name="left_collision">
-          <pose>-0.71 0.1054 0.075 0 0 0</pose>
-          <geometry><box><size>0.02 0.64 0.15</size></box></geometry>
+          <pose>-0.71 0.1054 0.6 0 0 0</pose>
+          <geometry><box><size>0.02 0.64 1.2</size></box></geometry>
         </collision>
         <visual name="left_visual">
-          <pose>-0.71 0.1054 0.075 0 0 0</pose>
-          <geometry><box><size>0.02 0.64 0.15</size></box></geometry>
+          <pose>-0.71 0.1054 0.6 0 0 0</pose>
+          <geometry><box><size>0.02 0.64 1.2</size></box></geometry>
           <material>
             <ambient>0.90 0.90 0.90 1</ambient>
             <diffuse>0.97 0.97 0.97 1</diffuse>
@@ -582,12 +592,12 @@ def write_world(variant):
           </material>
         </visual>
         <collision name="right_collision">
-          <pose>0.71 0.1054 0.075 0 0 0</pose>
-          <geometry><box><size>0.02 0.64 0.15</size></box></geometry>
+          <pose>0.71 0.1054 0.6 0 0 0</pose>
+          <geometry><box><size>0.02 0.64 1.2</size></box></geometry>
         </collision>
         <visual name="right_visual">
-          <pose>0.71 0.1054 0.075 0 0 0</pose>
-          <geometry><box><size>0.02 0.64 0.15</size></box></geometry>
+          <pose>0.71 0.1054 0.6 0 0 0</pose>
+          <geometry><box><size>0.02 0.64 1.2</size></box></geometry>
           <material>
             <ambient>0.90 0.90 0.90 1</ambient>
             <diffuse>0.97 0.97 0.97 1</diffuse>
@@ -595,12 +605,12 @@ def write_world(variant):
           </material>
         </visual>
         <collision name="front_collision">
-          <pose>0.0 -0.2046 0.075 0 0 0</pose>
-          <geometry><box><size>1.44 0.02 0.15</size></box></geometry>
+          <pose>0.0 -0.2046 0.6 0 0 0</pose>
+          <geometry><box><size>1.44 0.02 1.2</size></box></geometry>
         </collision>
         <visual name="front_visual">
-          <pose>0.0 -0.2046 0.075 0 0 0</pose>
-          <geometry><box><size>1.44 0.02 0.15</size></box></geometry>
+          <pose>0.0 -0.2046 0.6 0 0 0</pose>
+          <geometry><box><size>1.44 0.02 1.2</size></box></geometry>
           <material>
             <ambient>0.90 0.90 0.90 1</ambient>
             <diffuse>0.97 0.97 0.97 1</diffuse>
@@ -608,12 +618,12 @@ def write_world(variant):
           </material>
         </visual>
         <collision name="back_collision">
-          <pose>0.0 0.4154 0.075 0 0 0</pose>
-          <geometry><box><size>1.44 0.02 0.15</size></box></geometry>
+          <pose>0.0 0.4154 0.6 0 0 0</pose>
+          <geometry><box><size>1.44 0.02 1.2</size></box></geometry>
         </collision>
         <visual name="back_visual">
-          <pose>0.0 0.4154 0.075 0 0 0</pose>
-          <geometry><box><size>1.44 0.02 0.15</size></box></geometry>
+          <pose>0.0 0.4154 0.6 0 0 0</pose>
+          <geometry><box><size>1.44 0.02 1.2</size></box></geometry>
           <material>
             <ambient>0.90 0.90 0.90 1</ambient>
             <diffuse>0.97 0.97 0.97 1</diffuse>
