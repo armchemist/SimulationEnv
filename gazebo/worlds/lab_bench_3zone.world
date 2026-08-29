@@ -55,6 +55,65 @@
       </link>
     </model>
 
+    <!-- white boundary walls around the bench edge -->
+    <model name="bench_walls">
+      <static>true</static>
+      <link name="link">
+        <collision name="left_collision">
+          <pose>-0.71 0.1054 0.075 0 0 0</pose>
+          <geometry><box><size>0.02 0.64 0.15</size></box></geometry>
+        </collision>
+        <visual name="left_visual">
+          <pose>-0.71 0.1054 0.075 0 0 0</pose>
+          <geometry><box><size>0.02 0.64 0.15</size></box></geometry>
+          <material>
+            <ambient>0.90 0.90 0.90 1</ambient>
+            <diffuse>0.97 0.97 0.97 1</diffuse>
+            <specular>0.10 0.10 0.10 1</specular>
+          </material>
+        </visual>
+        <collision name="right_collision">
+          <pose>0.71 0.1054 0.075 0 0 0</pose>
+          <geometry><box><size>0.02 0.64 0.15</size></box></geometry>
+        </collision>
+        <visual name="right_visual">
+          <pose>0.71 0.1054 0.075 0 0 0</pose>
+          <geometry><box><size>0.02 0.64 0.15</size></box></geometry>
+          <material>
+            <ambient>0.90 0.90 0.90 1</ambient>
+            <diffuse>0.97 0.97 0.97 1</diffuse>
+            <specular>0.10 0.10 0.10 1</specular>
+          </material>
+        </visual>
+        <collision name="front_collision">
+          <pose>0.0 -0.2046 0.075 0 0 0</pose>
+          <geometry><box><size>1.44 0.02 0.15</size></box></geometry>
+        </collision>
+        <visual name="front_visual">
+          <pose>0.0 -0.2046 0.075 0 0 0</pose>
+          <geometry><box><size>1.44 0.02 0.15</size></box></geometry>
+          <material>
+            <ambient>0.90 0.90 0.90 1</ambient>
+            <diffuse>0.97 0.97 0.97 1</diffuse>
+            <specular>0.10 0.10 0.10 1</specular>
+          </material>
+        </visual>
+        <collision name="back_collision">
+          <pose>0.0 0.4154 0.075 0 0 0</pose>
+          <geometry><box><size>1.44 0.02 0.15</size></box></geometry>
+        </collision>
+        <visual name="back_visual">
+          <pose>0.0 0.4154 0.075 0 0 0</pose>
+          <geometry><box><size>1.44 0.02 0.15</size></box></geometry>
+          <material>
+            <ambient>0.90 0.90 0.90 1</ambient>
+            <diffuse>0.97 0.97 0.97 1</diffuse>
+            <specular>0.10 0.10 0.10 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
     <include>
       <uri>model://beaker</uri>
       <name>beaker_01</name>

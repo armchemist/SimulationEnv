@@ -53,12 +53,28 @@ gazebo/
   worlds/lab_bench_3zone.world 3-zone bench
 ros2/
   simulation_env_bringup/      launch + ros_gz_bridge config
+run_gazebo.sh                  run a world in the open-manipulator container
 docs/layout.md
 ```
 
 ## Running it
 
 Tested against **Gazebo Sim (Harmonic)** with **ROS 2** and `ros_gz`.
+
+### Without installing anything
+
+`run_gazebo.sh` runs a world inside the `robotis/open-manipulator:5.0.0`
+container, which already carries Gazebo Harmonic and `ros_gz`. It mounts the
+repo at `/sim`, forwards X11 and passes `/dev/dri` through when the host has
+one.
+
+```bash
+./run_gazebo.sh              # 4 zone, GUI
+./run_gazebo.sh 3zone        # 3 zone, GUI
+./run_gazebo.sh 4zone -s     # server only
+./run_gazebo.sh ros          # colcon build + ros2 launch + ros_gz_bridge
+./run_gazebo.sh ros 3zone
+```
 
 ### Gazebo on its own
 
@@ -139,6 +155,10 @@ Shared by both worlds; only the poses differ.
 | `rail_carriage` | box 80 × 60 × 62 | 0.8 | mesh source for `rail_axis` |
 | `omx_mounting_plate` | box 395 × 140 × 6 | 1.2 | static |
 | `omx_module` | box 150 × 375 × 277 | 1.5 | static visual placeholder |
+
+Both worlds also carry `bench_walls`, a static 150 mm white kerb 20 mm thick
+around the bench edge, so props that get knocked cannot fall off the surface.
+It is written straight into the world files by `export_gazebo.py`.
 
 `linear_rail` and `rail_carriage` are not placed in either world directly —
 `rail_axis` references their meshes and adds the joint — but their model
